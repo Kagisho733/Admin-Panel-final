@@ -1,0 +1,203 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /*
+    |------------------------------------------------------------------------
+    | Helpers
+    |------------------------------------------------------------------------
+    | Roles live on the users document: users/{uid}.role and users/{uid}.active
+    | which is exactly what src/context/AuthProvider.tsx reads.
+    |------------------------------------------------------------------------
+    */
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function profile() {
+      return get(
+        /databases/$(database)/documents/users/$(request.auth.uid)
+      ).data;
+    }
+
+    function isActive() {
+      return isSignedIn() && profile().active == true;
+    }
+
+    function hasRole(roles) {
+      return isActive() && profile().role in roles;
+    }
+
+    function isAdmin() {
+      return hasRole(['admin']);
+    }
+
+    function isStaff() {
+      return hasRole(['admin', 'manager']);
+    }
+
+    /*
+    |------------------------------------------------------------------------
+    | Users
+    |------------------------------------------------------------------------
+    | A signed in user may always read their own profile, otherwise admin only.
+    |------------------------------------------------------------------------
+    */
+
+    match /users/{userId} {
+
+      allow read: if isSignedIn() &&
+                     (request.auth.uid == userId || isAdmin());
+
+      allow create, update, delete: if isAdmin();
+
+    }
+
+    /*
+    |------------------------------------------------------------------------
+    | Catalogue
+    |------------------------------------------------------------------------
+    */
+
+    match /products/{document=**} {
+      allow read: if isActive();
+      allow write: if isStaff();
+    }
+
+    match /categories/{document=**} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+
+    /*
+    |------------------------------------------------------------------------
+    | Sales
+    |------------------------------------------------------------------------
+    */
+
+    match /orders/{document=**} {
+      allow read: if isActive();
+      allow write: if hasRole(['admin', 'manager', 'seller']);
+    }
+
+    /*
+    |------------------------------------------------------------------------
+    | CRM
+    |------------------------------------------------------------------------
+    */
+
+    match /customers/{document=**} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+
+    match /customerNotes/{document=**} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+
+    match /customerActivities/{document=**} {
+      allow read: if isActive();
+      allow write: if isActive();
+    }
+
+    match /customerCommunications/{document=**} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+
+    match /customerAttachments/{document=**} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+
+    /*
+    |------------------------------------------------------------------------
+    | Inventory, Suppliers and Purchasing
+    |------------------------------------------------------------------------
+    */
+
+    match /stockMovements/{document=**} {
+      allow read: if isActive();
+      allow create: if isStaff();
+      allow update, delete: if isAdmin();
+    }
+
+    match /suppliers/{document=**} {
+      allow read: if isActive();
+      allow write: if isStaff();
+    }
+
+    match /purchaseOrders/{document=**} {
+      allow read: if isActive();
+      allow write: if isStaff();
+    }
+
+    /*
+    |------------------------------------------------------------------------
+    | Finance
+    |------------------------------------------------------------------------
+    */
+
+    match /expenses/{document=**} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    /*
+    |------------------------------------------------------------------------
+    | Company and Settings
+    |------------------------------------------------------------------------
+    */
+
+    match /company/{document=**} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+
+    match /settings/{document=**} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+
+    /*
+    |------------------------------------------------------------------------
+    | Notifications
+    |------------------------------------------------------------------------
+    */
+
+    match /notifications/{document=**} {
+      allow read: if isActive();
+      allow create, update: if isActive();
+      allow delete: if isStaff();
+    }
+
+    /*
+    |------------------------------------------------------------------------
+    | Audit Logs
+    |------------------------------------------------------------------------
+    | Append only. Nobody may edit history, only an admin may prune it.
+    |------------------------------------------------------------------------
+    */
+
+    match /auditLogs/{document=**} {
+      allow read: if isAdmin();
+      allow create: if isActive();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    /*
+    |------------------------------------------------------------------------
+    | Deny everything else
+    |------------------------------------------------------------------------
+    */
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+  }
+}
