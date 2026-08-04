@@ -6,13 +6,13 @@ import {getAuth} from "firebase/auth";
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBkUzClefK_Q7Ld3nEn_AK7s_VeYuqzoSQ",
-  authDomain: "books-bots-drones-f6fb0.firebaseapp.com",
-  projectId: "books-bots-drones-f6fb0",
-  storageBucket: "books-bots-drones-f6fb0.firebasestorage.app",
-  messagingSenderId: "1018136992194",
-  appId: "1:1018136992194:web:817361604529ba7de41e5b",
-  measurementId: "G-D4CJ9KSV62"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 
