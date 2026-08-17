@@ -1,193 +1,61 @@
-/*
-|--------------------------------------------------------------------------
-| Notification Service
-|--------------------------------------------------------------------------
-| System notifications raised by the different modules of the panel.
-|--------------------------------------------------------------------------
-*/
+import type { AppNotification, NotificationType } from "../types/Notification";
+import { apiRequest } from "./api/client";
 
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  query,
-  updateDoc,
-  limit,
-} from "firebase/firestore";
-
-import { db } from "../firebase/config";
-
-import type { AppNotification }
-from "../types/Notification";
-
-const notificationsCollection = collection(
-  db,
-  "notifications"
-);
-
-/*
-|--------------------------------------------------------------------------
-| Get Notifications
-|--------------------------------------------------------------------------
-*/
-
-export async function getNotifications(): Promise<AppNotification[]> {
-
-  const q = query(
-    notificationsCollection,
-    orderBy("createdAt", "desc")
-  );
-
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...(doc.data() as Omit<AppNotification, "id">),
-  }));
-
+interface ApiNotification {
+  id: string; title: string; message: string; type: string;
+  isRead: boolean; createdAt: string;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Subscribe To Notifications
-|--------------------------------------------------------------------------
-| Returns the unsubscribe function so components can clean up on unmount.
-|--------------------------------------------------------------------------
-*/
+const toNotification = (item: ApiNotification): AppNotification => ({
+  id: item.id,
+  title: item.title,
+  message: item.message,
+  type: (["info", "success", "warning", "error"].includes(item.type) ? item.type : "info") as NotificationType,
+  module: "backend",
+  read: item.isRead,
+  createdAt: item.createdAt,
+});
 
-export function subscribeToNotifications(
-  onChange: (notifications: AppNotification[]) => void,
-  max = 30
-) {
-
-  const q = query(
-    notificationsCollection,
-    orderBy("createdAt", "desc"),
-    limit(max)
-  );
-
-  return onSnapshot(
-    q,
-    (snapshot) => {
-
-      onChange(
-        snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...(doc.data() as Omit<AppNotification, "id">),
-        }))
-      );
-
-    },
-    (error) => {
-
-      console.error(
-        "Failed to subscribe to notifications:",
-        error
-      );
-
-    }
-  );
-
+export async function getNotifications() {
+  const response = await apiRequest<{notifications: ApiNotification[]}>("/notifications");
+  return response.notifications.map(toNotification);
 }
 
-/*
-|--------------------------------------------------------------------------
-| Create Notification
-|--------------------------------------------------------------------------
-| Never throws, so a notification failure can never break a user action.
-|--------------------------------------------------------------------------
-*/
-
-export async function createNotification(
-  notification: Omit<AppNotification, "id" | "read" | "createdAt">
-): Promise<void> {
-
-  try {
-
-    await addDoc(notificationsCollection, {
-
-      ...notification,
-
-      read: false,
-
-      createdAt: new Date(),
-
-    });
-
-  } catch (error) {
-
-    console.error(
-      "Failed to create notification:",
-      error
-    );
-
-  }
-
+export function subscribeToNotifications(callback: (items: AppNotification[]) => void) {
+  let active = true;
+  const load = () => void getNotifications().then((items) => {
+    if (active) callback(items);
+  }).catch(() => {
+    if (active) callback([]);
+  });
+  load();
+  const timer = window.setInterval(load, 60_000);
+  return () => {
+    active = false;
+    window.clearInterval(timer);
+  };
 }
 
-/*
-|--------------------------------------------------------------------------
-| Mark Notification As Read
-|--------------------------------------------------------------------------
-*/
-
-export async function markNotificationAsRead(
-  notificationId: string
-): Promise<void> {
-
-  await updateDoc(
-    doc(
-      db,
-      "notifications",
-      notificationId
-    ),
-    {
-      read: true,
-    }
-  );
-
+export async function createNotification(notification: Partial<AppNotification> & {uid?: string}) {
+  await apiRequest("/notifications", {
+    method: "POST",
+    body: JSON.stringify({
+      uid: notification.uid,
+      title: notification.title,
+      message: notification.message,
+      type: notification.type || "info",
+    }),
+  });
 }
 
-/*
-|--------------------------------------------------------------------------
-| Mark All Notifications As Read
-|--------------------------------------------------------------------------
-*/
-
-export async function markAllNotificationsAsRead(
-  notifications: AppNotification[]
-): Promise<void> {
-
-  await Promise.all(
-    notifications
-      .filter(notification => !notification.read)
-      .map(notification =>
-        markNotificationAsRead(notification.id)
-      )
-  );
-
+export async function markNotificationAsRead(id: string) {
+  await apiRequest(`/notifications/${id}/read`, {method: "PUT"});
 }
 
-/*
-|--------------------------------------------------------------------------
-| Delete Notification
-|--------------------------------------------------------------------------
-*/
+export async function markAllNotificationsAsRead(notifications: AppNotification[]) {
+  await Promise.all(notifications.filter((item) => !item.read).map((item) => markNotificationAsRead(item.id)));
+}
 
-export async function deleteNotification(
-  notificationId: string
-): Promise<void> {
-
-  await deleteDoc(
-    doc(
-      db,
-      "notifications",
-      notificationId
-    )
-  );
-
+export async function deleteNotification(id: string) {
+  await apiRequest(`/notifications/${id}`, {method: "DELETE"});
 }

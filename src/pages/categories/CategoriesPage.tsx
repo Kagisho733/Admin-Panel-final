@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FaPlus } from "react-icons/fa";
 
 import type { Category } from "../../types/Category";
 
@@ -20,7 +21,6 @@ import EditCategoryModal
     import { toast } from "react-hot-toast";
 
 import { useAuth } from "../../hooks/useAuth";
-import CategoryStats from "../../components/categories/CategoryStats";
 
 
 export default function CategoriesPage() {
@@ -411,18 +411,11 @@ export default function CategoriesPage() {
 
                     onClick={() => setAddModalOpen(true)}
 
-                    className="
-      rounded-xl
-      bg-blue-600
-      px-5
-      py-3
-      text-white
-      hover:bg-blue-700
-    "
+                    className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
 
                 >
 
-                    + Add Category
+                    <FaPlus size={13} /> Add category
 
                 </button>
 
@@ -496,27 +489,6 @@ export default function CategoriesPage() {
                 </div>
 
             </div>
-            <CategoryStats
-                totalCategories={categories.length}
-                activeCategories={
-                    categories.filter(
-                        (category) => category.status === "active"
-                    ).length
-                }
-                inactiveCategories={
-                    categories.filter(
-                        (category) => category.status !== "active"
-                    ).length
-                }
-                totalProducts={
-                    categories.reduce(
-                        (sum, category) =>
-                            sum + (category.productCount ?? 0),
-                        0
-                    )
-                }
-            />
-
             <div className="flex">
 
                 <CategorySearch

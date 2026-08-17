@@ -112,3 +112,47 @@ code {
 
 
 @import "tailwindcss";
+
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #0f172a;
+  background: #f4f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+html { background: #f4f7fb; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+#root { min-height: 100vh; }
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.25);
+  outline-offset: 2px;
+}
+
+.admin-shell {
+  background:
+    radial-gradient(circle at 90% 0%, rgba(14, 165, 233, 0.08), transparent 26rem),
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.admin-shell main > div > h1,
+.admin-shell main h1 { letter-spacing: -0.035em; }
+.admin-shell table { border-collapse: separate; border-spacing: 0; }
+.admin-shell thead { color: #475569; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.admin-shell tbody tr { transition: background-color 160ms ease; }
+.admin-shell tbody tr:hover { background: #f8fafc; }
+.admin-shell th { padding: 0.9rem 1rem; text-align: left; white-space: nowrap; border-bottom: 1px solid #e2e8f0; }
+.admin-shell td { max-width: 24rem; padding: 1rem; color: #334155; vertical-align: middle; border-bottom: 1px solid #f1f5f9; }
+.admin-shell tbody tr:last-child td { border-bottom: 0; }
+.admin-shell ::-webkit-scrollbar { width: 9px; height: 9px; }
+.admin-shell ::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: #94a3b8; background-clip: padding-box; }
+.admin-shell ::-webkit-scrollbar-track { background: transparent; }
+.admin-shell input, .admin-shell select, .admin-shell textarea { border-color: #cbd5e1; }
+.editor-tool { transition: color 150ms ease, background-color 150ms ease; }
+
+@media (max-width: 640px) {
+  .admin-shell table { min-width: 760px; }
+}

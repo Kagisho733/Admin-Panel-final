@@ -1,5 +1,6 @@
 export type OrderStatus =
   | "pending"
+  | "paid"
   | "processing"
   | "shipped"
   | "delivered"
@@ -16,7 +17,12 @@ export interface OrderItem {
   name: string;
   quantity: number;
   price: number;
+  imageUrl?: string;
+  lineTotal?: number;
 }
+
+export interface ShippingAddress {fullName:string;phone:string;addressLine1:string;addressLine2?:string;city:string;province?:string;postalCode?:string;country:string}
+export interface OrderHistoryEntry {from:OrderStatus;to:OrderStatus;note?:string;actorEmail?:string;createdAt:string}
 
 export interface Order {
   id?: string;
@@ -41,4 +47,10 @@ export interface Order {
   createdAt?: any;
 
   updatedAt?: any;
+  subtotal?: number; shippingFee?: number; tax?: number;
+  shippingAddress?: ShippingAddress;
+  paymentReference?: string; paymentMethod?: string;
+  courier?: string; trackingNumber?: string; trackingUrl?: string; estimatedDeliveryAt?: string;
+  cancellationReason?: string; refundRequired?: boolean;
+  statusHistory?: OrderHistoryEntry[];
 }

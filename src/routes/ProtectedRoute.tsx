@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 import { useAuth } from "../hooks/useAuth";
 
@@ -15,6 +15,7 @@ export default function ProtectedRoute({
   children,
 
 }: Props) {
+  const location = useLocation();
 
   const {
 
@@ -44,7 +45,7 @@ export default function ProtectedRoute({
 
   if (!user) {
 
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{from: location}} />;
 
   }
 

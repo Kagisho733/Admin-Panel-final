@@ -1,338 +1,52 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-
+import { FaDownload, FaMapMarkerAlt, FaTimes, FaTruck } from "react-icons/fa";
 import { updateOrderStatus } from "../../services/orderService";
+import type { Order, OrderStatus } from "../../types/Order";
 import OrderStatusBadge from "./OrderStatusBadge";
-
-import { useAuth } from "../../hooks/useAuth";
-
 import OrderTimeline from "./OrderTimeline";
-
 import PaymentStatusBadge from "./PaymentStatusBadge";
 
-import type {
-  Order,
-  OrderStatus,
-} from "../../types/Order";
+interface Props { open:boolean; order:Order|null; onClose:()=>void; onStatusUpdated:()=>Promise<void>; onGenerateInvoice:(order:Order)=>void }
+const transitions: Record<OrderStatus, OrderStatus[]> = {
+  pending: ["processing", "cancelled"], paid: ["processing", "cancelled"], processing: ["shipped", "cancelled"],
+  shipped: ["delivered", "cancelled"], delivered: [], cancelled: [],
+};
+const money = (value = 0) => new Intl.NumberFormat("en-ZA", {style:"currency", currency:"ZAR"}).format(value);
 
-interface Props {
-  open: boolean;
-  order: Order | null;
-  onClose: () => void;
-  onStatusUpdated: () => Promise<void>;
-  onGenerateInvoice: (order: Order) => void;
-}
-
-export default function OrderDetailsModal({
-  open,
-  order,
-  onClose,
-  onStatusUpdated,
-  onGenerateInvoice,
-}: Props) {
-
-  const { user } = useAuth();
-
-
-  const [status, setStatus] = useState<OrderStatus>(
-  order?.status ?? "pending"
-);
-
-  const [savingStatus, setSavingStatus] =
-    useState(false);
-
- useEffect(() => {
-  if (order) {
-    setStatus(order.status);
+export default function OrderDetailsModal({open, order, onClose, onStatusUpdated, onGenerateInvoice}:Props) {
+  const [nextStatus,setNextStatus] = useState<OrderStatus|"">("");
+  const [note,setNote] = useState(""); const [notify,setNotify] = useState(true);
+  const [courier,setCourier] = useState(""); const [trackingNumber,setTrackingNumber] = useState("");
+  const [trackingUrl,setTrackingUrl] = useState(""); const [estimatedDeliveryAt,setEstimatedDeliveryAt] = useState("");
+  const [cancellationReason,setCancellationReason] = useState(""); const [saving,setSaving] = useState(false);
+  useEffect(()=>{ setNextStatus(""); setNote(""); setCourier(""); setTrackingNumber(""); setTrackingUrl(""); setEstimatedDeliveryAt(""); setCancellationReason(""); },[order?.id,open]);
+  useEffect(()=>{ if(!open)return; const previous=document.body.style.overflow; document.body.style.overflow="hidden"; const escape=(e:KeyboardEvent)=>{if(e.key==="Escape"&&!saving)onClose()}; window.addEventListener("keydown",escape); return()=>{document.body.style.overflow=previous;window.removeEventListener("keydown",escape)}},[open,onClose,saving]);
+  const available = useMemo(()=>order ? transitions[order.status] : [],[order]);
+  if(!open||!order)return null;
+  const address=order.shippingAddress;
+  async function saveStatus(){
+    if(!order?.id||!nextStatus)return;
+    if(nextStatus==="processing"&&order.paymentStatus!=="paid"){toast.error("Payment must be confirmed before processing.");return}
+    if(nextStatus==="shipped"&&(!courier.trim()||!trackingNumber.trim())){toast.error("Courier and tracking number are required.");return}
+    if(nextStatus==="cancelled"&&!cancellationReason.trim()){toast.error("Enter a cancellation reason.");return}
+    try{setSaving(true);await updateOrderStatus(order.id,{status:nextStatus,note,notifyCustomer:notify,courier,trackingNumber,trackingUrl,estimatedDeliveryAt,cancellationReason});await onStatusUpdated();toast.success("Order status updated.");onClose()}catch(error){toast.error(error instanceof Error?error.message:"Failed to update order status.")}finally{setSaving(false)}
   }
-}, [order]);
-
-  if (!open || !order) return null;
-
-  const currentOrder = order;
-
-  async function handleStatusChange(
-    newStatus: OrderStatus
-  ) {
-
-    if (!currentOrder.id) return;
-
-    try {
-
-      setSavingStatus(true);
-
-      await updateOrderStatus(
-       currentOrder.id,
-        newStatus,
-        user?.email ?? "Unknown"
-      );
-
-      setStatus(newStatus);
-
-      await onStatusUpdated();
-
-      toast.success(
-        "Order status updated."
-      );
-
-    } catch (error) {
-
-      console.error(error);
-
-      toast.error(
-        "Failed to update order status."
-      );
-
-    } finally {
-
-      setSavingStatus(false);
-
-    }
-
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-      <div className="w-full max-w-4xl rounded-2xl bg-white shadow-2xl">
-
-        {/* Header */}
-        <div className="flex items-center justify-between border-b p-6">
-          <h2 className="text-2xl font-bold">
-            Order Details
-          </h2>
-
-          <button
-            onClick={onClose}
-            className="text-2xl text-gray-500 hover:text-black"
-          >
-            ✕
-          </button>
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-3 backdrop-blur-sm" onMouseDown={e=>{if(e.target===e.currentTarget&&!saving)onClose()}}>
+    <div role="dialog" aria-modal="true" className="flex max-h-[95vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+      <header className="flex items-start justify-between bg-gradient-to-r from-slate-950 to-blue-950 p-6 text-white"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Order {order.id?.slice(0,8)}</p><h2 className="mt-1 text-2xl font-black">Fulfilment details</h2><div className="mt-3 flex flex-wrap gap-2"><OrderStatusBadge status={order.status}/><PaymentStatusBadge status={order.paymentStatus}/></div></div><button onClick={onClose} disabled={saving} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-white/10" aria-label="Close"><FaTimes/></button></header>
+      <div className="flex-1 overflow-y-auto bg-slate-50 p-5 sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-3">
+          <section className="rounded-2xl border bg-white p-5"><h3 className="font-bold">Customer</h3><p className="mt-3 font-semibold">{order.customerName}</p><p className="text-sm text-slate-500">{order.customerEmail}</p><p className="text-sm text-slate-500">{order.customerPhone||"No phone supplied"}</p></section>
+          <section className="rounded-2xl border bg-white p-5"><h3 className="flex items-center gap-2 font-bold"><FaMapMarkerAlt className="text-blue-600"/>Delivery address</h3>{address?<p className="mt-3 text-sm leading-6 text-slate-600">{address.addressLine1}{address.addressLine2?<><br/>{address.addressLine2}</>:null}<br/>{[address.city,address.province,address.postalCode].filter(Boolean).join(", ")}<br/>{address.country}</p>:<p className="mt-3 text-sm text-amber-700">No delivery address recorded.</p>}</section>
+          <section className="rounded-2xl border bg-white p-5"><h3 className="font-bold">Payment & totals</h3><dl className="mt-3 space-y-2 text-sm"><div className="flex justify-between"><dt>Subtotal</dt><dd>{money(order.subtotal)}</dd></div><div className="flex justify-between"><dt>Delivery</dt><dd>{money(order.shippingFee)}</dd></div><div className="flex justify-between"><dt>Tax</dt><dd>{money(order.tax)}</dd></div><div className="flex justify-between border-t pt-2 text-base font-black"><dt>Total</dt><dd>{money(order.totalAmount)}</dd></div></dl><p className="mt-3 break-all text-xs text-slate-500">Reference: {order.paymentReference||"Not available"}</p></section>
+          <section className="rounded-2xl border bg-white p-5 lg:col-span-2"><h3 className="font-bold">Items ({order.items.length})</h3><div className="mt-3 divide-y">{order.items.map((item,index)=><div key={`${item.productId}-${index}`} className="flex items-center gap-4 py-3">{item.imageUrl?<img src={item.imageUrl} alt="" className="h-14 w-14 rounded-xl object-cover"/>:<div className="h-14 w-14 rounded-xl bg-slate-100"/>}<div className="min-w-0 flex-1"><p className="truncate font-semibold">{item.name}</p><p className="text-sm text-slate-500">{item.quantity} × {money(item.price)}</p></div><strong>{money(item.lineTotal??item.quantity*item.price)}</strong></div>)}</div></section>
+          <OrderTimeline order={order}/>
+          {(order.trackingNumber||order.courier)&&<section className="rounded-2xl border border-blue-200 bg-blue-50 p-5 lg:col-span-3"><h3 className="flex items-center gap-2 font-bold text-blue-950"><FaTruck/>Tracking</h3><p className="mt-2 text-sm">{order.courier}: <strong>{order.trackingNumber}</strong></p>{order.trackingUrl&&<a href={order.trackingUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-bold text-blue-700 underline">Open tracking page</a>}</section>}
         </div>
-
-        {/* Body */}
-        <div className="p-6">
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-
-            {/* Order ID */}
-            <div className="rounded-xl border p-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                Order ID
-              </h3>
-
-              <p className="mt-2 text-lg font-medium break-all">
-                {order.id}
-              </p>
-            </div>
-
-            {/* Customer */}
-            <div className="rounded-xl border p-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                Customer
-              </h3>
-
-              <p className="mt-2 text-lg font-medium">
-                {order.customerName}
-              </p>
-
-              <p className="mt-1 text-sm text-gray-500">
-                {order.customerEmail}
-              </p>
-            </div>
-
-            {/* Status */}
-            <div className="rounded-xl border p-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                Status
-              </h3>
-
-              <div className="mb-3">
-                <OrderStatusBadge status={status} />
-              </div>
-
-              <div className="mt-2">
-                <select
-                  value={status}
-                  disabled={savingStatus}
-                  onChange={(e) =>
-                    handleStatusChange(
-                      e.target.value as OrderStatus
-                    )
-                  }
-                  className="
-    mt-2
-    w-full
-    rounded-xl
-    border
-    p-3
-  "
-                >
-                  <option value="pending">
-                    Pending
-                  </option>
-
-                  <option value="processing">
-                    Processing
-                  </option>
-
-                  <option value="shipped">
-                    Shipped
-                  </option>
-
-                  <option value="delivered">
-                    Delivered
-                  </option>
-
-                  <option value="cancelled">
-                    Cancelled
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            {/* Total */}
-            <div className="rounded-xl border p-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                Total
-              </h3>
-
-              <p className="mt-2 text-3xl font-bold text-green-600">
-                R{order.totalAmount.toFixed(2)}
-              </p>
-            </div>
-
-            {/* Payment Status */}
-            <div className="rounded-xl border p-5">
-
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                Payment
-              </h3>
-
-              <div className="mt-3">
-
-                <PaymentStatusBadge
-                  status={order.paymentStatus}
-                />
-
-              </div>
-
-            </div>
-
-            {/* Order Progress */}
-            <div className="md:col-span-2">
-
-              <OrderTimeline order={order} />
-
-            </div>
-
-            {/* Ordered Items */}
-            <div className="rounded-xl border p-5 md:col-span-2">
-
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                Ordered Items
-              </h3>
-
-              <div className="mt-4 space-y-4">
-
-                {order.items.length === 0 ? (
-
-                  <p className="text-gray-500">
-                    No products in this order.
-                  </p>
-
-                ) : (
-
-                  order.items.map((item) => (
-
-                    <div
-                      key={item.productId}
-                      className="
-                        flex
-                        items-center
-                        justify-between
-                        rounded-xl
-                        border
-                        p-4
-                      "
-                    >
-                      <div>
-
-                        <p className="font-semibold">
-                          {item.name}
-                        </p>
-
-                        <p
-                          className="
-                            mt-2
-                            inline-flex
-                            rounded-full
-                            bg-gray-100
-                            px-3
-                            py-1
-                            text-sm
-                          "
-                        >
-                          Qty: {item.quantity}
-                        </p>
-
-                      </div>
-
-                      <div className="text-right">
-
-                        <p className="font-semibold">
-                          R{item.price.toFixed(2)}
-                        </p>
-
-                        <p className="text-sm text-gray-500">
-                          Total: R{(
-                            item.price * item.quantity
-                          ).toFixed(2)}
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                  ))
-
-                )}
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* Footer */}
-          <div className="mt-8 flex justify-end">
-
-            <button
-              onClick={onClose}
-              className="
-                rounded-xl
-                bg-gray-800
-                px-6
-                py-3
-                text-white
-                transition
-                hover:bg-black
-              "
-            >
-              Close
-            </button>
-
-            <button
-  onClick={() => onGenerateInvoice(order)}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700 transition"
-            >
-              📄 Generate Invoice
-            </button>
-
-          </div>
-
-        </div>
-
+        <section className="mt-5 rounded-2xl border bg-white p-5"><h3 className="text-lg font-black">Update fulfilment status</h3>{available.length===0?<p className="mt-2 text-sm text-slate-500">This order is closed and has no further status changes.</p>:<div className="mt-4 grid gap-4 md:grid-cols-2"><label className="text-sm font-bold">Next status<select value={nextStatus} onChange={e=>setNextStatus(e.target.value as OrderStatus)} className="mt-2 w-full rounded-xl border p-3"><option value="">Select an action</option>{available.map(s=><option key={s} value={s}>{s[0].toUpperCase()+s.slice(1)}</option>)}</select></label><label className="text-sm font-bold">Internal note<textarea value={note} onChange={e=>setNote(e.target.value)} className="mt-2 min-h-12 w-full rounded-xl border p-3" placeholder="Reason or fulfilment note"/></label>{nextStatus==="shipped"&&<><label className="text-sm font-bold">Courier *<input value={courier} onChange={e=>setCourier(e.target.value)} className="mt-2 w-full rounded-xl border p-3"/></label><label className="text-sm font-bold">Tracking number *<input value={trackingNumber} onChange={e=>setTrackingNumber(e.target.value)} className="mt-2 w-full rounded-xl border p-3"/></label><label className="text-sm font-bold">Tracking URL<input value={trackingUrl} onChange={e=>setTrackingUrl(e.target.value)} className="mt-2 w-full rounded-xl border p-3" type="url"/></label><label className="text-sm font-bold">Estimated delivery<input value={estimatedDeliveryAt} onChange={e=>setEstimatedDeliveryAt(e.target.value)} className="mt-2 w-full rounded-xl border p-3" type="date"/></label></>}{nextStatus==="cancelled"&&<label className="text-sm font-bold md:col-span-2">Cancellation reason *<textarea value={cancellationReason} onChange={e=>setCancellationReason(e.target.value)} className="mt-2 w-full rounded-xl border p-3"/></label>}<label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" checked={notify} onChange={e=>setNotify(e.target.checked)}/>Notify the customer about this update</label></div>}</section>
+        <footer className="mt-5 flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-between"><button onClick={()=>onGenerateInvoice(order)} className="flex items-center justify-center gap-2 rounded-xl border bg-white px-5 py-3 font-bold"><FaDownload/>Invoice</button><div className="flex gap-3"><button onClick={onClose} disabled={saving} className="rounded-xl border bg-white px-5 py-3 font-bold">Close</button>{available.length>0&&<button onClick={saveStatus} disabled={!nextStatus||saving} className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white disabled:opacity-50">{saving?"Saving…":"Save status"}</button>}</div></footer>
       </div>
     </div>
-  );
+  </div>
 }

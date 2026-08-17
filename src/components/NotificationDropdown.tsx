@@ -7,8 +7,6 @@ import {
 
 import type { IconType } from "react-icons";
 
-import { useNavigate } from "react-router-dom";
-
 import type {
   AppNotification,
   NotificationType,
@@ -43,8 +41,6 @@ export default function NotificationDropdown({
   onClose,
 }: Props) {
 
-  const navigate = useNavigate();
-
   const unreadCount = notifications.filter(
     (notification) => !notification.read
   ).length;
@@ -70,12 +66,6 @@ export default function NotificationDropdown({
 
     }
 
-    if (notification.link) {
-
-      navigate(notification.link);
-
-    }
-
     onClose();
 
   }
@@ -97,7 +87,7 @@ export default function NotificationDropdown({
 
   }
 
-  function formatTime(value: any) {
+  function formatTime(value: unknown) {
 
     if (!value) {
 
@@ -105,10 +95,7 @@ export default function NotificationDropdown({
 
     }
 
-    const date =
-      typeof value.toDate === "function"
-        ? value.toDate()
-        : new Date(value);
+    const date = new Date(String(value));
 
     if (isNaN(date.getTime())) {
 
@@ -228,15 +215,7 @@ export default function NotificationDropdown({
 
       </div>
 
-      <button
-        onClick={() => {
-          navigate("/notifications");
-          onClose();
-        }}
-        className="w-full p-4 text-center text-sm font-medium text-blue-600 hover:bg-gray-50"
-      >
-        View all notifications
-      </button>
+      <div className="p-3 text-center text-xs text-slate-400">Notifications refresh automatically</div>
 
     </div>
   );
