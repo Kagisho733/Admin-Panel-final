@@ -1,116 +1,18 @@
-import {
-  FaChartPie,
-  FaBoxOpen,
-  FaTags,
-  FaShoppingCart,
-  FaUsers,
-  FaChartLine,
-  FaCog,
-  FaSignOutAlt,
-  FaWarehouse,
-  FaTruck,
-  FaFileInvoiceDollar,
-  FaMoneyBillWave,
-  FaFileAlt,
-  FaBell,
-  FaClipboardList,
-  FaBuilding,
+import { FaBell, FaBoxOpen, FaChartPie, FaCommentDots, FaCreditCard, FaHeart, FaShoppingCart, FaStar, FaTags, FaUsers } from "react-icons/fa";
 
-} from "react-icons/fa";
+export const adminNavigation = [
+  {label: "Dashboard", path: "/dashboard", icon: FaChartPie, section: "Store", keywords: "home overview revenue statistics"},
+  {label: "Products", path: "/products", icon: FaBoxOpen, section: "Store", keywords: "catalogue inventory stock"},
+  {label: "Categories", path: "/categories", icon: FaTags, section: "Store", keywords: "departments books bots drones"},
+  {label: "Orders", path: "/orders", icon: FaShoppingCart, section: "Store", keywords: "sales fulfilment delivery"},
+  {label: "Users", path: "/users", icon: FaUsers, section: "Store", keywords: "customers administrators roles"},
+  {label: "Contact Messages", path: "/contact-messages", icon: FaCommentDots, section: "Content & support", keywords: "support enquiries"},
+  {label: "Reviews", path: "/reviews", icon: FaStar, section: "Content & support", keywords: "ratings comments moderation"},
+  {label: "Notifications", path: "/notifications", icon: FaBell, section: "Content & support", keywords: "alerts messages"},
+  {label: "Payments", path: "/payments", icon: FaCreditCard, section: "Customer activity", keywords: "transactions paystack"},
+  {label: "Carts", path: "/carts", icon: FaShoppingCart, section: "Customer activity", keywords: "shopping baskets"},
+  {label: "Wishlists", path: "/wishlists", icon: FaHeart, section: "Customer activity", keywords: "saved products"},
+] as const;
 
-export const navigation = [
-  {
-    name: "Dashboard",
-    icon: FaChartPie,
-    allowedRoles: ["admin", "manager", "seller"],
-  },
-  {
-    name: "Products",
-    icon: FaBoxOpen,
-    allowedRoles: ["admin", "manager"],
-  },
-  {
-    name: "Categories",
-    icon: FaTags,
-    allowedRoles: ["admin"],
-  },
-  {
-    name: "Orders",
-    icon: FaShoppingCart,
-    allowedRoles: ["admin", "manager", "seller"],
-  },
-
-  {
-  name: "Customers",
-  icon: FaUsers,
-  allowedRoles: ["admin"],
-},
-
-  {
-    name: "Users",
-    icon: FaUsers,
-    allowedRoles: ["admin"],
-  },
-  {
-    name: "Inventory",
-    icon: FaWarehouse,
-    allowedRoles: ["admin", "manager"],
-  },
-  {
-    name: "Suppliers",
-    icon: FaTruck,
-    allowedRoles: ["admin", "manager"],
-  },
-  {
-    name: "Purchasing",
-    icon: FaFileInvoiceDollar,
-    allowedRoles: ["admin", "manager"],
-  },
-  {
-    name: "Finance",
-    icon: FaMoneyBillWave,
-    allowedRoles: ["admin"],
-  },
-  {
-    name: "Analytics",
-    icon: FaChartLine,
-    allowedRoles: ["admin"],
-  },
-  {
-    name: "Reports",
-    icon: FaFileAlt,
-    allowedRoles: ["admin", "manager"],
-  },
-  {
-    name: "Notifications",
-    icon: FaBell,
-    allowedRoles: ["admin", "manager"],
-  },
-  {
-    name: "Audit Logs",
-    icon: FaClipboardList,
-    allowedRoles: ["admin"],
-  },
-  {
-    name: "Company",
-    icon: FaBuilding,
-    allowedRoles: ["admin"],
-  },
-  {
-    name: "Settings",
-    icon: FaCog,
-    allowedRoles: ["admin"],
-  },
-  {
-    name: "Logout",
-    icon: FaSignOutAlt,
-    allowedRoles: [
-      "admin",
-      "manager",
-      "seller",
-      "supplier",
-      "driver",
-      "support",
-    ],
-  },
-];
+export const adminSections = ["Store", "Content & support", "Customer activity"] as const;
+export const adminPageTitles = Object.fromEntries(adminNavigation.map(({path, label}) => [path, label]));

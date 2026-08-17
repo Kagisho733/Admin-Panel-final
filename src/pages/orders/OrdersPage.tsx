@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import type { Order } from "../../types/Order";
 
-import { getOrders, deleteOrders, updateOrdersStatus, } from "../../services/orderService";
+import { getOrders } from "../../services/orderService";
 
 import OrdersTable from "../../components/orders/OrdersTable";
 import OrderDetailsModal from "../../components/orders/OrderDetailsModal";
@@ -11,44 +11,12 @@ import OrderSearch from "../../components/orders/OrderSearch";
 import OrderStatusFilter from "../../components/orders/OrderStatusFilter";
 import OrdersTableSkeleton from "../../components/orders/OrdersTableSkeleton";
 import Pagination from "../../components/common/Pagination";
-import { useAuth } from "../../hooks/useAuth";
-import AddOrderButton from "../../components/orders/AddOrderButton";
-import OrderForm from "../../components/orders/OrderForm";
-import { getProducts } from "../../services/productService";
-import type { Product } from "../../types/Product";
 import BulkActions from "../../components/orders/BulkActions";
 import { exportOrdersToCSV } from "../../services/exportService";
 import { printOrders } from "../../services/printService";
 import { generateInvoice } from "../../services/invoiceService";
 
 export default function OrdersPage() {
-
-  const { user } = useAuth();
-
-  const [products, setProducts] =
-    useState<Product[]>([]);
-
-  const [orderFormOpen, setOrderFormOpen] =
-    useState(false);
-
-  async function loadProducts() {
-
-    try {
-
-      const data = await getProducts();
-
-      setProducts(data);
-
-    } catch (error) {
-
-      console.error(
-        "Error loading products:",
-        error
-      );
-
-    }
-
-  }
 
   const [orders, setOrders] =
     useState<Order[]>([]);
@@ -262,120 +230,6 @@ export default function OrdersPage() {
   }
 
 
-  async function handleBulkDelete() {
-
-    if (selectedOrders.length === 0) {
-
-      return;
-
-    }
-
-    const confirmed = window.confirm(
-
-      `Delete ${selectedOrders.length} selected order${selectedOrders.length > 1 ? "s" : ""
-      }?`
-
-    );
-
-    if (!confirmed) {
-
-      return;
-
-    }
-
-    try {
-
-      await deleteOrders(
-        selectedOrders,
-        user?.email ?? "Unknown"
-      );
-
-      await loadOrders();
-
-      setSelectedOrders([]);
-
-    } catch (error) {
-
-      console.error(error);
-
-      alert("Failed to delete selected orders.");
-
-    }
-
-  }
-
-
-
-  async function handleBulkStatusUpdate() {
-
-    if (selectedOrders.length === 0) {
-
-      return;
-
-    }
-
-    const status = window.prompt(
-
-      "Enter status:\n\npending\nprocessing\nshipped\ndelivered\ncancelled"
-
-    );
-
-    if (!status) {
-
-      return;
-
-    }
-
-    const validStatuses = [
-
-      "pending",
-      "processing",
-      "shipped",
-      "delivered",
-      "cancelled",
-
-    ];
-
-    if (
-
-      !validStatuses.includes(
-        status.toLowerCase()
-      )
-
-    ) {
-
-      alert("Invalid status.");
-
-      return;
-
-    }
-
-    try {
-
-      await updateOrdersStatus(
-
-        selectedOrders,
-
-        status.toLowerCase() as any,
-
-        user?.email ?? "Unknown"
-
-      );
-
-      await loadOrders();
-
-      setSelectedOrders([]);
-
-    } catch (error) {
-
-      console.error(error);
-
-      alert("Failed to update orders.");
-
-    }
-
-  }
-
   function handleExportCSV() {
     exportOrdersToCSV(filteredOrders);
   }
@@ -387,8 +241,6 @@ export default function OrdersPage() {
   useEffect(() => {
 
     loadOrders();
-
-    loadProducts();
 
   }, []);
 
@@ -461,9 +313,7 @@ export default function OrdersPage() {
 
         </div>
 
-        <AddOrderButton
-          onClick={() => setOrderFormOpen(true)}
-        />
+        <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">Orders are created by customers at checkout. Admins manage fulfilment here.</p>
 
       </div>
 
@@ -500,8 +350,6 @@ export default function OrdersPage() {
 
       <BulkActions
         selectedCount={selectedOrders.length}
-        onDelete={handleBulkDelete}
-        onStatusUpdate={handleBulkStatusUpdate}
         onExport={handleExportCSV}
         onPrint={handlePrintOrders}
         onClearSelection={() => {
@@ -544,13 +392,6 @@ export default function OrdersPage() {
         }}
       />
 
-
-      <OrderForm
-        open={orderFormOpen}
-        products={products}
-        onClose={() => setOrderFormOpen(false)}
-        onSaved={loadOrders}
-      />
 
       <OrderDetailsModal
         open={detailsOpen}

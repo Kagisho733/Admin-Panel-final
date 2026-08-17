@@ -1,7 +1,6 @@
 
 
 import AppRoutes from "./routes/AppRoutes";
-import { ThemeProvider } from "./context/ThemeContext";
 import { Toaster } from "react-hot-toast";
 
 
@@ -11,8 +10,7 @@ export default function App() {
 
   return (
 
-    <ThemeProvider>
-
+    <>
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -30,7 +28,7 @@ export default function App() {
 
     <AppRoutes />
 
-    </ThemeProvider>
+    </>
 
   );
 

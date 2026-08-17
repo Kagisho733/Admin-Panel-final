@@ -1,106 +1,23 @@
-// /*
-// |--------------------------------------------------------------------------
-// | Image Service
-// |--------------------------------------------------------------------------
-// | Handles uploading product images to Supabase Storage.
-// |--------------------------------------------------------------------------
-// */
+import { apiRequest } from "./api/client";
 
-// import { supabase } from "../supabase/supabase";
+const readAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(String(reader.result || ""));
+  reader.onerror = () => reject(reader.error || new Error("File could not be read"));
+  reader.readAsDataURL(file);
+});
 
-// /*
-// |--------------------------------------------------------------------------
-// | Upload Product Image
-// |--------------------------------------------------------------------------
-// */
-
-// export async function uploadImage(file: File) {
-
-//   // Create unique filename
-
-//   const fileName = `${Date.now()}-${file.name}`;
-
-//   // Upload image
-
-//   const { error } = await supabase.storage
-
-//     .from("products")
-
-//     .upload(fileName, file);
-
-//   if (error) {
-
-//     throw error;
-
-//   }
-
-//   // Get public URL
-
-//   const {
-
-//     data,
-
-//   } = supabase.storage
-
-//     .from("products")
-
-//     .getPublicUrl(fileName);
-
-//   return data.publicUrl;
-
-// }
-
-// import { supabase } from "../supabase/supabase";
-
-// export async function uploadImage(file: File) {
-
-//   const fileName = `${Date.now()}-${file.name}`;
-
-//   console.log("Uploading:", fileName);
-
-//   const { data, error } = await supabase.storage
-//     .from("products")
-//     .upload(fileName, file);
-
-//   console.log("Upload Data:", data);
-//   console.log("Upload Error:", error);
-
-//   if (error) {
-//     throw error;
-//   }
-
-//   const { data: publicData } = supabase.storage
-//     .from("products")
-//     .getPublicUrl(fileName);
-
-//   console.log("Public URL:", publicData.publicUrl);
-
-//   return publicData.publicUrl;
-// }
-
-import { supabase } from "../supabase/supabase";
-
-export async function uploadImage(file: File) {
-
-  console.log("Buckets...");
-
-  const buckets = await supabase.storage.listBuckets();
-
-  console.log(buckets);
-
-  const fileName = `${Date.now()}-${file.name}`;
-
-  const result = await supabase.storage
-    .from("products")
-    .upload(fileName, file);
-
-  console.log(result);
-
-  if (result.error) throw result.error;
-
-  const { data } = supabase.storage
-    .from("products")
-    .getPublicUrl(fileName);
-
-  return data.publicUrl;
+export async function uploadImage(file: File, folder = "product-images") {
+  if (!file.type.startsWith("image/")) throw new Error("Only image files are supported");
+  if (file.size > 5 * 1024 * 1024) throw new Error("Image must be smaller than 5 MB");
+  const response = await apiRequest<{image: {downloadUrl: string}}>("/storage/upload", {
+    method: "POST",
+    body: JSON.stringify({
+      folder,
+      fileName: file.name,
+      contentType: file.type,
+      base64: await readAsDataUrl(file),
+    }),
+  });
+  return response.image.downloadUrl;
 }

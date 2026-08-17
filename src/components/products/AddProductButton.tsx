@@ -1,3 +1,5 @@
+import { FaPlus } from "react-icons/fa";
+
 interface Props {
 
   onClick: () => void;
@@ -16,11 +18,11 @@ export default function AddProductButton({
 
       onClick={onClick}
 
-      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl"
+      className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
 
     >
 
-      + Add Product
+      <FaPlus size={13} /> Add product
 
     </button>
 

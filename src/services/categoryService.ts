@@ -1,214 +1,48 @@
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  getDoc,
-} from "firebase/firestore";
-
-import { db } from "../firebase/config";
-
 import type { Category } from "../types/Category";
+import { apiRequest } from "./api/client";
 
-import { logAudit } from "./auditLogService";
+interface ApiCategory {
+  id: string; name: string; description: string; imageUrl?: string;
+  isActive: boolean; createdAt?: string;
+}
 
-const categoriesCollection =
-  collection(db, "categories");
+const toCategory = (category: ApiCategory): Category => ({
+  id: category.id,
+  name: category.name,
+  description: category.description,
+  image: category.imageUrl || "",
+  productCount: 0,
+  status: category.isActive ? "active" : "inactive",
+  createdAt: category.createdAt,
+});
 
-  /*
-|--------------------------------------------------------------------------
-| Get All Categories
-|--------------------------------------------------------------------------
-*/
+const toPayload = (category: Omit<Category, "id">) => ({
+  name: category.name,
+  description: category.description,
+  imageUrl: category.image || "",
+  isActive: category.status === "active",
+});
 
-export async function getCategories(): Promise<Category[]> {
-
-  const snapshot =
-    await getDocs(categoriesCollection);
-
-  return snapshot.docs.map((doc) => ({
-
-    id: doc.id,
-
-    ...(doc.data() as Omit<Category, "id">),
-
+export async function getCategories() {
+  const [categoryResponse, productResponse] = await Promise.all([
+    apiRequest<{categories: ApiCategory[]}>("/categories", {}, false),
+    apiRequest<{products: Array<{categoryId: string}>}>("/products", {}, false),
+  ]);
+  return categoryResponse.categories.map((category) => ({
+    ...toCategory(category),
+    productCount: productResponse.products.filter((product) => product.categoryId === category.id).length,
   }));
-
 }
-
-/*
-|--------------------------------------------------------------------------
-| Create Category
-|--------------------------------------------------------------------------
-*/
-
-export async function createCategory(
-
-  category: Omit<Category, "id">,
-
-  performedBy: string = "Unknown"
-
-): Promise<void> {
-
-  const created = await addDoc(
-
-    categoriesCollection,
-
-    category
-
-  );
-
-  await logAudit({
-
-    action: "create",
-
-    module: "categories",
-
-    entityId: created.id,
-
-    entityName: category.name ?? "",
-
-    description: `Category "${category.name ?? ""}" was created.`,
-
-    performedBy,
-
-  });
-
+export async function getCategoryById(id: string) {
+  const response = await apiRequest<{category: ApiCategory}>(`/categories/${id}`, {}, false);
+  return toCategory(response.category);
 }
-
-
-
-/*
-|--------------------------------------------------------------------------
-| Update Category
-|--------------------------------------------------------------------------
-*/
-
-export async function updateCategory(
-
-  categoryId: string,
-
-  category: Omit<Category, "id">,
-
-  performedBy: string = "Unknown"
-
-): Promise<void> {
-
-  const categoryRef = doc(
-
-    db,
-
-    "categories",
-
-    categoryId
-
-  );
-
-  await updateDoc(
-
-    categoryRef,
-
-    category
-
-  );
-
-  await logAudit({
-
-    action: "update",
-
-    module: "categories",
-
-    entityId: categoryId,
-
-    entityName: category.name ?? "",
-
-    description: `Category "${category.name ?? categoryId}" was updated.`,
-
-    performedBy,
-
-  });
-
+export async function createCategory(category: Omit<Category, "id">, _performedBy?: string) {
+  await apiRequest("/categories", {method: "POST", body: JSON.stringify(toPayload(category))});
 }
-
-/*
-|--------------------------------------------------------------------------
-| Delete Category
-|--------------------------------------------------------------------------
-*/
-
-export async function deleteCategory(
-
-  categoryId: string,
-
-  performedBy: string = "Unknown",
-
-  categoryName: string = ""
-
-): Promise<void> {
-
-  const categoryRef = doc(
-
-    db,
-
-    "categories",
-
-    categoryId
-
-  );
-
-  await deleteDoc(categoryRef);
-
-  await logAudit({
-
-    action: "delete",
-
-    module: "categories",
-
-    entityId: categoryId,
-
-    entityName: categoryName,
-
-    description: `Category "${categoryName || categoryId}" was deleted.`,
-
-    performedBy,
-
-  });
-
+export async function updateCategory(id: string, category: Omit<Category, "id">, _performedBy?: string) {
+  await apiRequest(`/categories/${id}`, {method: "PUT", body: JSON.stringify(toPayload(category))});
 }
-
-/*
-|--------------------------------------------------------------------------
-| Get Category By ID
-|--------------------------------------------------------------------------
-*/
-
-export async function getCategoryById(
-  categoryId: string
-): Promise<Category | null> {
-
-  const categoryRef = doc(
-    db,
-    "categories",
-    categoryId
-  );
-
-  const snapshot =
-    await getDoc(categoryRef);
-
-  if (!snapshot.exists()) {
-
-    return null;
-
-  }
-
-  return {
-
-    id: snapshot.id,
-
-    ...(snapshot.data() as Omit<Category, "id">),
-
-  };
-
+export async function deleteCategory(id: string, _performedBy?: string, _categoryName?: string) {
+  await apiRequest(`/categories/${id}`, {method: "DELETE"});
 }

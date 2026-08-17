@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FaCheck, FaShoppingCart, FaTimes } from "react-icons/fa";
 
 import toast from "react-hot-toast";
 
@@ -74,6 +75,20 @@ export default function OrderForm({
     });
 
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !saving) onClose();
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [open, onClose, saving]);
 
   function handleAddProduct(productId: string) {
 
@@ -241,19 +256,19 @@ export default function OrderForm({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-3 backdrop-blur-sm sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) onClose(); }}>
 
-      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl bg-white shadow-2xl">
+      <div role="dialog" aria-modal="true" aria-labelledby="new-order-title" className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
 
-        <div className="flex items-center justify-between border-b p-6">
+        <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-slate-950 to-blue-950 p-6 text-white">
 
           <div>
 
-            <h2 className="text-2xl font-bold">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Manual order capture</p><h2 id="new-order-title" className="mt-1 flex items-center gap-3 text-2xl font-black"><FaShoppingCart className="text-cyan-300" />
               New Order
             </h2>
 
-            <p className="mt-1 text-gray-500">
+            <p className="mt-1 text-sm text-slate-300">
               Capture an order manually.
             </p>
 
@@ -261,8 +276,11 @@ export default function OrderForm({
 
           <button
             onClick={onClose}
-            className="text-2xl text-gray-500 transition hover:text-black"
+            disabled={saving}
+            className="grid h-10 w-10 place-items-center overflow-hidden rounded-xl text-[0px] text-slate-300 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+            aria-label="Close new order form"
           >
+            <FaTimes className="text-base" />
             ✕
           </button>
 
@@ -597,17 +615,18 @@ export default function OrderForm({
 
         </div>
 
-        <div className="flex justify-end gap-4 border-t p-6">
+        <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="text-xs text-slate-500">Press Escape or choose Cancel to leave without saving.</p><div className="flex gap-3">
 
           <button
             onClick={onClose}
+            disabled={saving}
             className="
               rounded-xl
-              bg-gray-300
+              border border-slate-300 bg-white font-bold text-slate-700
               px-5
               py-2.5
               transition
-              hover:bg-gray-400
+              hover:bg-slate-50 disabled:opacity-50
             "
           >
             Cancel
@@ -627,9 +646,9 @@ export default function OrderForm({
               disabled:opacity-50
             "
           >
-            {saving ? "Saving..." : "Create Order"}
+            <FaCheck className="mr-2 inline" />{saving ? "Saving order..." : "Create order"}
           </button>
-
+          </div>
         </div>
 
       </div>
