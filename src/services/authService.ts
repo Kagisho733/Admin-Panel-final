@@ -1,86 +1,86 @@
-import type { AuthUser } from "../types/AuthUser";
-import { apiRequest } from "./api/client";
 import {
-  clearAdminSession,
-  getAdminSession,
-  saveAdminSession,
-  type AdminSession,
-} from "./api/session";
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut,
+  type User as FirebaseUser,
+} from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebase/config";
+import type { AuthUser } from "../types/AuthUser";
+import { clearAdminSession, saveAdminSession, type AdminSession } from "./api/session";
 
-interface BackendUser {
-  uid: string;
-  email: string;
+interface UserProfile {
   name?: string;
+  firstName?: string;
+  lastName?: string;
   role?: string;
+  active?: boolean;
 }
 
-interface LoginResponse {
-  token: string;
-  refreshToken: string;
-  expiresIn: string | number;
-  user: BackendUser;
+async function createAdminSession(user: FirebaseUser): Promise<AdminSession> {
+  const profileSnapshot = await getDoc(doc(db, "users", user.uid));
+  const profile = profileSnapshot.data() as UserProfile | undefined;
+
+  if (!profileSnapshot.exists() || profile?.role !== "admin" || profile.active === false) {
+    await signOut(auth);
+    clearAdminSession();
+    throw new Error("This account does not have active administrator access");
+  }
+
+  const tokenResult = await user.getIdTokenResult(true);
+  const displayName = profile.name
+    || [profile.firstName, profile.lastName].filter(Boolean).join(" ")
+    || user.displayName
+    || user.email
+    || "Administrator";
+  const authUser: AuthUser = {
+    uid: user.uid,
+    email: user.email || "",
+    displayName,
+    role: "admin",
+  };
+  const session: AdminSession = {
+    token: tokenResult.token,
+    refreshToken: user.refreshToken,
+    expiresAt: new Date(tokenResult.expirationTime).getTime(),
+    user: authUser,
+  };
+  saveAdminSession(session);
+  return session;
 }
 
-interface ProfileResponse { user: BackendUser }
-
-const toAuthUser = (user: BackendUser): AuthUser => ({
-  uid: user.uid,
-  email: user.email,
-  displayName: user.name || user.email,
-  role: user.role,
-});
-
-const toSession = (response: LoginResponse): AdminSession => ({
-  token: response.token,
-  refreshToken: response.refreshToken,
-  expiresAt: Date.now() + Number(response.expiresIn) * 1000,
-  user: toAuthUser(response.user),
-});
+function waitForFirebaseUser(): Promise<FirebaseUser | null> {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      resolve(user);
+    }, reject);
+  });
+}
 
 export async function login(email: string, password: string) {
-  const response = await apiRequest<LoginResponse>(
-    "/auth/login",
-    {method: "POST", body: JSON.stringify({email, password})},
-    false
-  );
-  const session = toSession(response);
-  if (session.user.role !== "admin") {
-    clearAdminSession();
-    throw new Error("This account does not have administrator access");
-  }
-  saveAdminSession(session);
+  const credential = await signInWithEmailAndPassword(auth, email, password);
+  const session = await createAdminSession(credential.user);
   return session.user;
 }
 
 export async function restoreSession() {
-  const current = getAdminSession();
-  if (!current) return null;
-
-  let session = current;
-  if (current.expiresAt <= Date.now() + 60_000) {
-    const refreshed = await apiRequest<LoginResponse>(
-      "/auth/refresh",
-      {method: "POST", body: JSON.stringify({refreshToken: current.refreshToken})},
-      false
-    );
-    session = toSession(refreshed);
-    saveAdminSession(session);
-  }
-
-  const profile = await apiRequest<ProfileResponse>("/auth/profile");
-  const user = toAuthUser(profile.user);
-  if (user.role !== "admin") {
+  const user = auth.currentUser || await waitForFirebaseUser();
+  if (!user) {
     clearAdminSession();
     return null;
   }
-  saveAdminSession({...session, user});
-  return user;
+
+  const session = await createAdminSession(user);
+  return session.user;
 }
 
 export async function logout() {
   clearAdminSession();
+  await signOut(auth);
 }
 
 export async function resetPassword(email: string) {
-  await apiRequest("/auth/forgot-password", {method: "POST", body: JSON.stringify({email})}, false);
+  await sendPasswordResetEmail(auth, email);
 }
