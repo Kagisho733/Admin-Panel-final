@@ -12,7 +12,7 @@ export default function Sidebar() {
 
   const signOut = async () => {
     await logout();
-    toast.success("Signed out safely");
+    toast.success("Signed out  Successfully");
     navigate("/login", {replace: true});
   };
 

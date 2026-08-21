@@ -11,7 +11,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
+  
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -25,6 +25,8 @@ export default function LoginPage() {
       setError(reason instanceof Error ? reason.message : "Sign in failed");
     } finally { setLoading(false); }
   }
+
+  
 
   return <main className="grid min-h-screen bg-slate-950 lg:grid-cols-[1.1fr_0.9fr]">
     <section className="relative hidden overflow-hidden p-12 text-white lg:flex lg:flex-col lg:justify-between">
