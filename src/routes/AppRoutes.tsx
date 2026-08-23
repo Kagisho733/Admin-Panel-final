@@ -15,6 +15,8 @@ const CollectionPage = lazy(() => import("../pages/collections/CollectionPage"))
 const PaymentsPage = lazy(() => import("../pages/activity/PaymentsPage"));
 const CustomerActivityPage = lazy(() => import("../pages/activity/CustomerActivityPage"));
 const ReviewsPage = lazy(() => import("../pages/reviews/ReviewsPage"));
+const PromotionsPage = lazy(() => import("../pages/promotions/PromotionsPage"));
+const ReturnsPage = lazy(() => import("../pages/returns/ReturnsPage"));
 
 const loader = <div className="flex min-h-[60vh] items-center justify-center">Loading...</div>;
 
@@ -30,6 +32,8 @@ export default function AppRoutes() {
       <Route path="/products" element={<ProductsPage />} />
       <Route path="/categories" element={<CategoriesPage />} />
       <Route path="/orders" element={<OrdersPage />} />
+      <Route path="/promotions" element={<PromotionsPage />} />
+      <Route path="/returns" element={<ReturnsPage />} />
       <Route path="/users" element={<UsersPage />} />
       <Route path="/contact-messages" element={<CollectionPage collectionName="contactMessages" />} />
       <Route path="/notifications" element={<CollectionPage collectionName="notifications" />} />

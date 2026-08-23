@@ -184,7 +184,7 @@ pdf.text("Payment Status", 20, y);
 
 pdf.setFont("helvetica", "normal");
 
-pdf.text("PAID", 70, y);
+pdf.text((order.paymentStatus || "unpaid").toUpperCase(), 70, y);
 
 y += 10;
 
