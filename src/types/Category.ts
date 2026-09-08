@@ -10,7 +10,13 @@ export interface Category {
 
   description: string;
 
+  storefrontDescription: string;
+
   image?: string;
+
+  displayOrder: number;
+
+  showOnHomepage: boolean;
 
   productCount: number;
 

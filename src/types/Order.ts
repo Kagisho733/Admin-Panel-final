@@ -10,6 +10,7 @@ export type PaymentStatus =
   | "unpaid"
   | "paid"
   | "partially-paid"
+  | "partially_refunded"
   | "refunded";
 
 export interface OrderItem {

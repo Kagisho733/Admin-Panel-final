@@ -1,5 +1,5 @@
 import type { Order, OrderStatus } from "../types/Order";
-import { apiRequest } from "./api/client";
+import { apiDownload, apiRequest } from "./api/client";
 
 interface ApiOrder {
   id: string; email: string; items: Order["items"];
@@ -53,4 +53,27 @@ export async function deleteOrder() {
 
 export async function deleteOrders(_ids?: string[], _performedBy?: string) {
   throw new Error("Order deletion is not supported by the backend");
+}
+
+export type FinancialDocumentType = "sales_invoice"|"sales_receipt"|"credit_note"|"refund_confirmation";
+export interface FinancialDocument {id:string;number:string;type:FinancialDocumentType;orderId:string;amount:number;currency:string;issuedAt:string;reason?:string}
+
+export async function getOrderDocuments(orderId:string) {
+  return (await apiRequest<{documents:FinancialDocument[]}>(`/orders/${orderId}/documents`)).documents;
+}
+
+export async function downloadOrderDocument(orderId:string, document:FinancialDocument) {
+  return apiDownload(`/orders/${orderId}/documents/${document.id}/pdf`, `${document.number}.pdf`);
+}
+
+export async function confirmPayOnDelivery(orderId:string, method:"cash"|"card"|"eft", reference?:string) {
+  return apiRequest(`/orders/${orderId}/pay-on-delivery/confirm`, {method:"POST",body:JSON.stringify({method,reference})});
+}
+
+export async function issueCreditNote(orderId:string, amount:number, reason:string, correctionReference:string) {
+  return apiRequest(`/orders/${orderId}/credit-notes`, {method:"POST",body:JSON.stringify({amount,reason,correctionReference})});
+}
+
+export async function recordOrderRefund(orderId:string, amount:number, reason:string, providerReference:string) {
+  return apiRequest(`/orders/${orderId}/refunds`, {method:"POST",body:JSON.stringify({amount,reason,providerReference})});
 }

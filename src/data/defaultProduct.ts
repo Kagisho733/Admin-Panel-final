@@ -13,7 +13,12 @@ export const defaultProduct: Product = {
   minStock: 0,
   status: "Active",
   featured: false,
+  isNew: false,
+  isBestSeller: false,
+  displayOrder: 0,
+  showWhenOutOfStock: true,
   imageUrl: "",
+  images: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };

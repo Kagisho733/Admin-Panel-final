@@ -224,6 +224,8 @@ export default function ProductTable({
 
             </th>
 
+            <th className="p-4 text-left">Merchandising</th>
+
             <th className="p-4 text-center">
 
               Actions
@@ -240,7 +242,7 @@ export default function ProductTable({
 
             <tr>
 
-              <div className="py-16 text-center">
+              <td colSpan={7} className="py-16 text-center"><div>
 
                 <div className="text-6xl mb-4">
                   📦
@@ -254,7 +256,7 @@ export default function ProductTable({
                   Start by adding your first product.
                 </p>
 
-              </div>
+              </div></td>
 
             </tr>
 
@@ -341,6 +343,8 @@ export default function ProductTable({
                   </span>
 
                 </td>
+
+                <td className="p-4"><div className="flex max-w-48 flex-wrap gap-1.5">{product.featured && <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">Featured</span>}{product.isNew && <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-bold text-cyan-700">New</span>}{product.isBestSeller && <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">Best seller</span>}{!product.featured && !product.isNew && !product.isBestSeller && <span className="text-xs text-slate-400">Standard</span>}</div></td>
 
                 <td className="p-4">
 

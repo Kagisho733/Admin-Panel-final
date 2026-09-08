@@ -3,6 +3,7 @@ import { apiRequest } from "./api/client";
 
 interface ApiCategory {
   id: string; name: string; description: string; imageUrl?: string;
+  storefrontDescription?: string; displayOrder?: number; showOnHomepage?: boolean;
   isActive: boolean; createdAt?: string;
 }
 
@@ -10,7 +11,10 @@ const toCategory = (category: ApiCategory): Category => ({
   id: category.id,
   name: category.name,
   description: category.description,
+  storefrontDescription: category.storefrontDescription || category.description,
   image: category.imageUrl || "",
+  displayOrder: Number(category.displayOrder) || 0,
+  showOnHomepage: category.showOnHomepage ?? true,
   productCount: 0,
   status: category.isActive ? "active" : "inactive",
   createdAt: category.createdAt,
@@ -19,7 +23,10 @@ const toCategory = (category: ApiCategory): Category => ({
 const toPayload = (category: Omit<Category, "id">) => ({
   name: category.name,
   description: category.description,
+  storefrontDescription: category.storefrontDescription,
   imageUrl: category.image || "",
+  displayOrder: category.displayOrder,
+  showOnHomepage: category.showOnHomepage,
   isActive: category.status === "active",
 });
 

@@ -48,6 +48,8 @@ export default function ProductsPage() {
 
   const [category, setCategory] = useState("");
 
+  const [merchandising, setMerchandising] = useState<"" | "featured" | "new" | "best-seller">("");
+
   const [openModal, setOpenModal] = useState(false);
 
   const [editingProduct, setEditingProduct] =
@@ -200,7 +202,7 @@ export default function ProductsPage() {
 
     setCurrentPage(1);
 
-  }, [search, category]);
+  }, [search, category, merchandising]);
 
   /*
   |--------------------------------------------------------------------------
@@ -218,7 +220,12 @@ export default function ProductsPage() {
       category === "" ||
       product.category === category;
 
-    return matchesSearch && matchesCategory;
+    const matchesMerchandising = merchandising === "" ||
+      (merchandising === "featured" && product.featured) ||
+      (merchandising === "new" && product.isNew) ||
+      (merchandising === "best-seller" && product.isBestSeller);
+
+    return matchesSearch && matchesCategory && matchesMerchandising;
 
   });
 
@@ -381,6 +388,13 @@ export default function ProductsPage() {
           onChange={setCategory}
 
         />
+
+        <select value={merchandising} onChange={(event) => setMerchandising(event.target.value as typeof merchandising)} className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          <option value="">All merchandising</option>
+          <option value="featured">Featured products</option>
+          <option value="new">New arrivals</option>
+          <option value="best-seller">Best sellers</option>
+        </select>
 
       </div>
       {loading ? (

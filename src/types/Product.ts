@@ -33,7 +33,17 @@ export interface Product {
 
   featured: boolean;
 
+  isNew: boolean;
+
+  isBestSeller: boolean;
+
+  displayOrder: number;
+
+  showWhenOutOfStock: boolean;
+
   imageUrl: string;
+
+  images: string[];
 
   createdAt: Date;
 

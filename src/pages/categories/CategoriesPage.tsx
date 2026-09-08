@@ -16,6 +16,7 @@ import CategoryDetailsModal
     from "../../components/categories/CategoryDetailsModal";
 import AddCategoryModal
     from "../../components/categories/AddCategoryModal";
+import type { CategoryFormValue } from "../../components/categories/CategoryFormModal";
 import EditCategoryModal
     from "../../components/categories/EditCategoryModal";
     import { toast } from "react-hot-toast";
@@ -113,15 +114,7 @@ export default function CategoriesPage() {
 
     async function handleCreateCategory(
 
-        category: {
-
-            name: string;
-
-            description: string;
-
-            status: "active" | "inactive";
-
-        }
+        category: CategoryFormValue
 
     ) {
 
@@ -166,6 +159,10 @@ export default function CategoriesPage() {
                 {
                     name: category.name,
                     description: category.description,
+                    storefrontDescription: category.storefrontDescription,
+                    image: category.image,
+                    displayOrder: category.displayOrder,
+                    showOnHomepage: category.showOnHomepage,
                     status: category.status,
                     productCount: category.productCount,
                 },

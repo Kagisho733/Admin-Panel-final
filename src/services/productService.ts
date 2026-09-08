@@ -4,7 +4,8 @@ import { apiRequest } from "./api/client";
 interface ApiProduct {
   id: string; name: string; description: string; categoryId: string;
   categoryName?: string; brand?: string; price: number; stock: number;
-  images?: string[]; isActive: boolean; isBestSeller: boolean;
+  images?: string[]; isActive: boolean; isFeatured?: boolean; isNew?: boolean; isBestSeller: boolean;
+  displayOrder?: number; showWhenOutOfStock?: boolean;
   costPrice?: number; minStock?: number; sku?: string; barcode?: string;
   createdAt: string; updatedAt: string;
 }
@@ -23,8 +24,13 @@ const toProduct = (product: ApiProduct): Product => ({
   stock: Number(product.stock) || 0,
   minStock: Number(product.minStock) || 0,
   status: product.isActive ? "Active" : "Hidden",
-  featured: product.isBestSeller,
+  featured: product.isFeatured ?? false,
+  isNew: product.isNew ?? false,
+  isBestSeller: product.isBestSeller ?? false,
+  displayOrder: Number(product.displayOrder) || 0,
+  showWhenOutOfStock: product.showWhenOutOfStock ?? true,
   imageUrl: product.images?.[0] || "",
+  images: product.images || [],
   createdAt: new Date(product.createdAt),
   updatedAt: new Date(product.updatedAt),
 });
@@ -47,9 +53,13 @@ async function toPayload(product: Partial<Product>) {
     minStock: product.minStock,
     sku: product.sku,
     barcode: product.barcode,
-    images: product.imageUrl ? [product.imageUrl] : [],
+    images: product.images?.length ? product.images : product.imageUrl ? [product.imageUrl] : [],
     isActive: product.status === "Active",
-    isBestSeller: Boolean(product.featured),
+    isFeatured: Boolean(product.featured),
+    isNew: Boolean(product.isNew),
+    isBestSeller: Boolean(product.isBestSeller),
+    displayOrder: Number(product.displayOrder) || 0,
+    showWhenOutOfStock: product.showWhenOutOfStock ?? true,
   };
 }
 

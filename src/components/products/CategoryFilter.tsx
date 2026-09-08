@@ -1,4 +1,5 @@
-import { productCategories } from "../../data/productCategories";
+import { useEffect, useState } from "react";
+import { getCategories } from "../../services/categoryService";
 
 interface Props {
 
@@ -15,6 +16,14 @@ export default function CategoryFilter({
   onChange,
 
 }: Props) {
+
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    void getCategories()
+      .then((items) => setCategories(items.map((item) => item.name)))
+      .catch(() => setCategories([]));
+  }, []);
 
   return (
 
@@ -47,7 +56,7 @@ export default function CategoryFilter({
 
       </option>
 
-      {productCategories.map((category) => (
+      {categories.map((category) => (
 
         <option
           key={category}

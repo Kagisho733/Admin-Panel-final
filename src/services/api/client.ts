@@ -43,3 +43,21 @@ export async function apiRequest<T>(
 
   return body as T;
 }
+
+export async function apiDownload(path: string, filename: string): Promise<void> {
+  if (!API_URL) throw new ApiError(500, "VITE_API_URL is not configured");
+  const headers = new Headers();
+  const session = getAdminSession();
+  if (session?.token) headers.set("Authorization", `Bearer ${session.token}`);
+  const response = await fetch(`${API_URL}${path}`, {headers});
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({})) as ApiErrorBody;
+    throw new ApiError(response.status, body.message || body.error || `Request failed (${response.status})`);
+  }
+  const url = URL.createObjectURL(await response.blob());
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
