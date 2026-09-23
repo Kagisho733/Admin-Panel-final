@@ -1,7 +1,7 @@
 import type { Product } from "../types/Product";
 import { apiRequest } from "./api/client";
 
-interface ApiProduct {
+interface ApiProduct extends Pick<Product, "weight" | "length" | "width" | "height" | "packaging" | "lockerEligible"> {
   id: string; name: string; description: string; categoryId: string;
   categoryName?: string; brand?: string; price: number; stock: number;
   images?: string[]; isActive: boolean; isFeatured?: boolean; isNew?: boolean; isBestSeller: boolean;
@@ -13,6 +13,7 @@ interface ApiCategory { id: string; name: string; slug: string }
 
 const toProduct = (product: ApiProduct): Product => ({
   id: product.id,
+  weight: product.weight, length: product.length, width: product.width, height: product.height, packaging: product.packaging, lockerEligible: product.lockerEligible,
   name: product.name,
   description: product.description,
   category: product.categoryName || product.categoryId,
@@ -42,6 +43,7 @@ async function toPayload(product: Partial<Product>) {
   );
   if (!category) throw new Error("Select a category that exists in the backend");
   return {
+    weight: product.weight, length: product.length, width: product.width, height: product.height, packaging: product.packaging, lockerEligible: product.lockerEligible,
     name: product.name,
     description: product.description,
     categoryId: category.id,

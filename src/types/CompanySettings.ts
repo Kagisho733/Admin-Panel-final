@@ -1,4 +1,6 @@
+import type { CourierSettings } from "./Courier";
 export interface CompanySettings {
+  courierSettings?: CourierSettings;
   companyName: string;
   companyEmail: string;
   phone: string;

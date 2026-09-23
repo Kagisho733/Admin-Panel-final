@@ -1,3 +1,4 @@
+import CourierReadiness from "./CourierReadiness";
 /*
 |--------------------------------------------------------------------------
 | Product Table
@@ -288,7 +289,7 @@ export default function ProductTable({
 
                     <div>
 
-                      <h3 className="font-semibold text-gray-900">
+                      <CourierReadiness product={product}/><h3 className="font-semibold text-gray-900">
 
                         {product.name}
 

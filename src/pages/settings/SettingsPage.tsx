@@ -1,3 +1,4 @@
+import CourierSettingsForm from "../../components/settings/CourierSettingsForm";
 import SettingsCard from "../../components/settings/SettingsCard";
 import AdminProfile from "../../components/settings/AdminProfile";
 import CompanyProfileForm from "../../components/company/CompanyProfileForm";
@@ -22,6 +23,7 @@ export default function SettingsPage() {
             </div>
 
             <AdminProfile />
+            <CourierSettingsForm />
 
             <div className="grid gap-6 md:grid-cols-2">
 

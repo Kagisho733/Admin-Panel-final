@@ -6,7 +6,7 @@ interface ApiOrder {
   shippingAddress?: {fullName?: string; phone?: string};
   total: number; status: OrderStatus; paymentStatus?: Order["paymentStatus"];
   notes?: string; createdAt?: string; updatedAt?: string;
-  subtotal?:number;shippingFee?:number;tax?:number;paymentReference?:string;paymentMethod?:string;courier?:string;trackingNumber?:string;trackingUrl?:string;estimatedDeliveryAt?:string;cancellationReason?:string;refundRequired?:boolean;statusHistory?:Order["statusHistory"];
+  subtotal?:number;shippingFee?:number;tax?:number;paymentReference?:string;paymentMethod?:string;courier?:string;trackingNumber?:string;trackingUrl?:string;estimatedDeliveryAt?:string;cancellationReason?:string;refundRequired?:boolean;statusHistory?:Order["statusHistory"];shipping?:Order["shipping"];
 }
 
 const toOrder = (order: ApiOrder): Order => ({
@@ -21,7 +21,7 @@ const toOrder = (order: ApiOrder): Order => ({
   notes: order.notes,
   createdAt: order.createdAt,
   updatedAt: order.updatedAt,
-  shippingAddress: order.shippingAddress as Order["shippingAddress"], subtotal:order.subtotal,shippingFee:order.shippingFee,tax:order.tax,paymentReference:order.paymentReference,paymentMethod:order.paymentMethod,courier:order.courier,trackingNumber:order.trackingNumber,trackingUrl:order.trackingUrl,estimatedDeliveryAt:order.estimatedDeliveryAt,cancellationReason:order.cancellationReason,refundRequired:order.refundRequired,statusHistory:order.statusHistory,
+  shippingAddress: order.shippingAddress as Order["shippingAddress"], shipping:order.shipping, subtotal:order.subtotal,shippingFee:order.shippingFee,tax:order.tax,paymentReference:order.paymentReference,paymentMethod:order.paymentMethod,courier:order.courier,trackingNumber:order.trackingNumber,trackingUrl:order.trackingUrl,estimatedDeliveryAt:order.estimatedDeliveryAt,cancellationReason:order.cancellationReason,refundRequired:order.refundRequired,statusHistory:order.statusHistory,
 });
 
 export async function getOrders() {

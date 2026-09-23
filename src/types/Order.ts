@@ -20,6 +20,7 @@ export interface OrderItem {
   price: number;
   imageUrl?: string;
   lineTotal?: number;
+  weight?: number; length?: number; width?: number; height?: number; packaging?: string;
 }
 
 export interface ShippingAddress {fullName:string;phone:string;addressLine1:string;addressLine2?:string;city:string;province?:string;postalCode?:string;country:string}
@@ -50,6 +51,7 @@ export interface Order {
   updatedAt?: any;
   subtotal?: number; shippingFee?: number; tax?: number;
   shippingAddress?: ShippingAddress;
+  shipping?: {provider:string;serviceCode:string;serviceName:string;quotedAmount:number;shipmentId:string;trackingReference:string;status:string;collectionDate?:string|null;estimatedDeliveryDate?:string|null;labelAvailable:boolean};
   paymentReference?: string; paymentMethod?: string;
   courier?: string; trackingNumber?: string; trackingUrl?: string; estimatedDeliveryAt?: string;
   cancellationReason?: string; refundRequired?: boolean;

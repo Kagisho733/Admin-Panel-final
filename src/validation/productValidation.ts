@@ -1,6 +1,7 @@
 import type { Product } from "../types/Product";
 
 export interface ProductErrors {
+ weight?: string; length?: string; width?: string; height?: string;
 
     name?: string;
 
@@ -193,7 +194,11 @@ export function validateProduct(
 
     }
 
-    return errors;
+    for (const key of ["weight", "length", "width", "height"] as const) {
+ const value = product[key];
+ if (value !== undefined && (!Number.isFinite(value) || value <= 0)) errors[key] = "Enter a number greater than zero.";
+ }
+ return errors;
 
 }
 

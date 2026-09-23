@@ -1,6 +1,8 @@
 import type { Product } from "../types/Product";
 
 export const defaultProduct: Product = {
+  packaging: "",
+  lockerEligible: false,
   name: "",
   description: "",
   category: "",

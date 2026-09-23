@@ -8,6 +8,12 @@
 
 export interface Product {
   id?: string;
+  weight?: number; // Packed kg
+  length?: number; // Packed cm
+  width?: number;
+  height?: number;
+  packaging?: string;
+  lockerEligible?: boolean;
 
   name: string;
 
